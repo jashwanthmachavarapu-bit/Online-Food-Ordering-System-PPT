@@ -1,0 +1,207 @@
+
+#include <iostream>
+#include <iomanip>
+#include <string>
+using namespace std;
+
+class FoodItem {
+private:
+    int id;
+    string name;
+    double price;
+
+public:
+    FoodItem() {
+        id = 0;
+        name = "";
+        price = 0;
+    }
+
+    FoodItem(int i, string n, double p) {
+        id = i;
+        name = n;
+        price = p;
+    }
+
+    int getId() const {
+        return id;
+    }
+
+    string getName() const {
+        return name;
+    }
+
+    double getPrice() const {
+        return price;
+    }
+
+    void display() const {
+        cout << left << setw(8) << id
+             << setw(20) << name
+             << "Rs. " << fixed << setprecision(2)
+             << price << endl;
+    }
+};
+
+class Order {
+private:
+    int* quantities;
+    int size;
+    static int totalOrders;
+
+public:
+       Order(int menuSize) {
+        size = menuSize;
+        quantities = new int[size]();
+        totalOrders++;
+    }
+
+    Order(const Order&) = delete;
+    Order& operator=(const Order&) = delete;
+
+    ~Order() {
+        delete[] quantities;
+        cout << "\nOrder memory released.\n";
+    }
+
+       void addItem(int itemNo) {
+        addItem(itemNo, 1);
+    }
+
+    void addItem(int itemNo, int quantity) {
+        if (itemNo < 1 || itemNo > size) {
+            cout << "Invalid food item number!\n";
+            return;
+        }
+
+        if (quantity <= 0) {
+            cout << "Quantity must be positive!\n";
+            return;
+        }
+
+        quantities[itemNo - 1] += quantity;
+        cout << "Item added to cart successfully!\n";
+    }
+
+    double calculateTotal(const FoodItem menu[]) const {
+        double total = 0;
+
+        for (int i = 0; i < size; i++) {
+            total += quantities[i] * menu[i].getPrice();
+        }
+
+        return total;
+    }
+
+        static int getTotalOrders() {
+        return totalOrders;
+    }
+
+    friend void printBill(const Order&, const FoodItem[]);
+};
+
+int Order::totalOrders = 0;
+
+void printBill(const Order& order, const FoodItem menu[]) {
+    double total = 0;
+
+    cout << "\n========== ORDER BILL ==========\n";
+    cout << left << setw(20) << "Food Item"
+         << setw(10) << "Qty" << "Amount\n";
+    cout << "--------------------------------\n";
+
+    for (int i = 0; i < order.size; i++) {
+        if (order.quantities[i] > 0) {
+            double amount =
+                order.quantities[i] * menu[i].getPrice();
+
+            cout << left << setw(20) << menu[i].getName()
+                 << setw(10) << order.quantities[i]
+                 << "Rs. " << fixed << setprecision(2)
+                 << amount << endl;
+
+            total += amount;
+        }
+    }
+
+    double discount = 0;
+
+    if (total >= 500) {
+        discount = total * 0.10;
+    }
+
+    cout << "--------------------------------\n";
+    cout << "Subtotal: Rs. " << total << endl;
+    cout << "Discount: Rs. " << discount << endl;
+    cout << "Final Bill: Rs. " << total - discount << endl;
+    cout << "================================\n";
+}
+
+int main() {
+    const int MENU_SIZE = 5;
+
+       FoodItem menu[MENU_SIZE] = {
+        FoodItem(1, "Burger", 120),
+        FoodItem(2, "Pizza", 250),
+        FoodItem(3, "Biryani", 180),
+        FoodItem(4, "Sandwich", 80),
+        FoodItem(5, "French Fries", 100)
+    };
+
+    Order order(MENU_SIZE);
+
+    int choice, quantity;
+
+    cout << "================================\n";
+    cout << "   ONLINE FOOD ORDERING SYSTEM\n";
+    cout << "================================\n";
+
+    do {
+        cout << "\n1. Display Food Menu\n";
+        cout << "2. Add Food to Cart\n";
+        cout << "3. View Bill\n";
+        cout << "4. Place Order and Exit\n";
+        cout << "Enter your choice: ";
+        cin >> choice;
+
+        switch (choice) {
+        case 1:
+            cout << "\n---------- FOOD MENU ----------\n";
+            cout << left << setw(8) << "ID"
+                 << setw(20) << "Food Item" << "Price\n";
+
+            for (int i = 0; i < MENU_SIZE; i++) {
+                menu[i].display();
+            }
+            break;
+
+        case 2:
+            cout << "Enter food item ID: ";
+            cin >> choice;
+
+            cout << "Enter quantity: ";
+            cin >> quantity;
+
+            order.addItem(choice, quantity);
+            break;
+
+        case 3:
+            printBill(order, menu);
+            break;
+
+        case 4:
+            cout << "\nThank you for ordering!\n";
+            printBill(order, menu);
+            break;
+
+        default:
+            cout << "Invalid choice! Try again.\n";
+        }
+
+    } while (choice != 4);
+
+    cout << "Total orders created: "
+         << Order::getTotalOrders() << endl;
+
+    return 0;
+}
